@@ -1,0 +1,6 @@
+path:
+	android/system/core/overlay/
+
+在Android.mk 修改应用程序的名字
+
+编写好驱动程序后，mm一下编译该文件，然后adb push 进到系统中去，运行
