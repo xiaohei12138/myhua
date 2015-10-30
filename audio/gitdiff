@@ -1,0 +1,139 @@
+diff --git a/hardware/rockchip/audio/legacy_hal/codec_config/rt3224_config.h b/hardware/rockchip/audio/legacy_hal/codec_config/rt3224_config.h
+index 17f1a20..e2cb6c9 100755
+--- a/hardware/rockchip/audio/legacy_hal/codec_config/rt3224_config.h
++++ b/hardware/rockchip/audio/legacy_hal/codec_config/rt3224_config.h
+@@ -3367,24 +3367,40 @@ const struct config_control rt3224_main_mic_capture_controls[] = {
+ 
+     //OPEN ROUTE
+     {
++        .ctl_name = "RECMIXL BST2 Switch",
++        .int_val = {on},
++    },
++    {
+         .ctl_name = "RECMIXR BST1 Switch",
+         .int_val = {on},
+     },
++     {
++        .ctl_name = "Mono ADC L1 Mux",
++        .str_val = "ADCL",
++    },
+     {
+         .ctl_name = "Mono ADC R1 Mux",
+         .str_val = "ADCR",
+     },
+     {
++        .ctl_name = "Mono ADC MIXL ADC1 Switch",
++        .int_val = {on},
++    },
++    {
+         .ctl_name = "Mono ADC MIXR ADC1 Switch",
+         .int_val = {on},
+     },
++     {
++        .ctl_name = "IF2 ADC L Mux",
++        .str_val = "Mono ADC MIXL",
++    },
+     {
+         .ctl_name = "IF2 ADC R Mux",
+         .str_val = "Mono ADC MIXR",
+     },
+     {
+         .ctl_name = "ADC IF2 Data Switch",
+-        .str_val = "right copy to left",
++        .str_val = "Normal",
+     },
+ 
+     //"Single ended"=0, "Differential"=1
+@@ -3395,57 +3411,81 @@ const struct config_control rt3224_main_mic_capture_controls[] = {
+     //min=0,max=8, bypass=0=0db, 30db=3, 52db=8
+     {
+         .ctl_name = "IN1 Boost",
+-        .int_val = {5},
++        .int_val = {3},
++    },
++    {
++        .ctl_name = "IN2 Boost",
++        .int_val = {1},
+     },
+     //dBscale-min=-17.625dB,step=0.375dB,min=0,max=127  
+     {
+         .ctl_name = "Mono ADC Capture Volume",
+-        .int_val = {60, 60},
++        .int_val = {80, 80},
+     },
+ };
+ 
+ const struct config_control rt3224_hands_free_mic_capture_controls[] = {
+-    {
+-        .ctl_name = "RECMIXR BST1 Switch",
++      {
++        .ctl_name = "RECMIXR BST3 Switch",
+         .int_val = {off},
+     },
+ 
+     //OPEN ROUTE
+     {
+-        .ctl_name = "RECMIXR BST3 Switch",
++        .ctl_name = "RECMIXL BST2 Switch",
+         .int_val = {on},
+     },
+     {
++        .ctl_name = "RECMIXR BST1 Switch",
++        .int_val = {on},
++    },
++     {
++        .ctl_name = "Mono ADC L1 Mux",
++        .str_val = "ADCL",
++    },
++    {
+         .ctl_name = "Mono ADC R1 Mux",
+         .str_val = "ADCR",
+     },
+     {
++        .ctl_name = "Mono ADC MIXL ADC1 Switch",
++        .int_val = {on},
++    },
++    {
+         .ctl_name = "Mono ADC MIXR ADC1 Switch",
+         .int_val = {on},
+     },
++     {
++        .ctl_name = "IF2 ADC L Mux",
++        .str_val = "Mono ADC MIXL",
++    },
+     {
+         .ctl_name = "IF2 ADC R Mux",
+         .str_val = "Mono ADC MIXR",
+     },
+     {
+         .ctl_name = "ADC IF2 Data Switch",
+-        .str_val = "right copy to left",
++        .str_val = "Normal",
+     },
+ 
+     //"Single ended"=0, "Differential"=1
+     {
+-        .ctl_name = "IN3 Mode Control",
+-        .str_val = "Single ended",
++        .ctl_name = "IN1 Mode Control",
++        .str_val = "Differential",
+     },
+     //min=0,max=8, bypass=0=0db, 30db=3, 52db=8
+     {
+-        .ctl_name = "IN3 Boost",
+-        .int_val = {5},
++        .ctl_name = "IN1 Boost",
++        .int_val = {3},
++    },
++    {
++        .ctl_name = "IN2 Boost",
++        .int_val = {1},
+     },
+     //dBscale-min=-17.625dB,step=0.375dB,min=0,max=127  
+     {
+         .ctl_name = "Mono ADC Capture Volume",
+-        .int_val = {60, 60},
++        .int_val = {80, 80},
+     },
+ };
+ 
