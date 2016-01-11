@@ -1,0 +1,5 @@
+proc/cmdline 看到的是 androidboot.mode=emmc    系统一般都是判断 androidboot.mode=charge 进入充电界面。
+
+android： system/core/init/init.c
+kernel: kernel/drivers/power/rk29_charger_display.c
+

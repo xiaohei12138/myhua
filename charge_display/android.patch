@@ -1,0 +1,40 @@
+diff --git a/init/init.c b/init/init.c
+index afe86cd..e9b0e07 100755
+--- a/init/init.c
++++ b/init/init.c
+@@ -71,6 +71,7 @@ static int   bootchart_count;
+ 
+ static char console[32];
+ static char bootmode[32];
++static char bootstart[32];
+ static char hardware[32];
+ static unsigned revision = 0;
+ static char qemu[32];
+@@ -749,6 +750,7 @@ static void export_kernel_boot_props(void)
+         { "ro.boot.mode", "ro.bootmode", "unknown", },
+         { "ro.boot.baseband", "ro.baseband", "unknown", },
+         { "ro.boot.bootloader", "ro.bootloader", "unknown", },
++        { "ro.boot.start", "ro.bootstart", "unknown", },
+     };
+ 
+     for (i = 0; i < ARRAY_SIZE(prop_map); i++) {
+@@ -767,6 +769,9 @@ static void export_kernel_boot_props(void)
+     property_get("ro.bootmode", tmp);
+     strlcpy(bootmode, tmp, sizeof(bootmode));
+ 
++    property_get("ro.bootstart", tmp);
++    strlcpy(bootstart, tmp, sizeof(bootstart));
++
+     /* if this was given on kernel command line, override what we read
+      * before (e.g. from /proc/cpuinfo), if anything */
+     ret = property_get("ro.boot.hardware", tmp);
+@@ -1123,8 +1128,7 @@ int main(int argc, char **argv)
+     restorecon("/dev/__properties__");
+     restorecon_recursive("/sys");
+ 
+-    is_charger = !strcmp(bootmode, "charger");
+-
++    is_charger = !strcmp(bootstart, "charger");
+     INFO("property init\n");
+     if (!is_charger)
+         property_load_boot_defaults();
