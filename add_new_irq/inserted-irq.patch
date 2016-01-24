@@ -1,0 +1,106 @@
+diff --git a/drivers/input/keyboard/rk29_keys.c b/drivers/input/keyboard/rk29_keys.c
+index 2855410..db85b0e 100755
+--- a/drivers/input/keyboard/rk29_keys.c
++++ b/drivers/input/keyboard/rk29_keys.c
+@@ -31,8 +31,11 @@
+ #define DRIFT_ADVALUE					70
+ #define INVALID_ADVALUE 				-1
+ #define EV_MENU					KEY_F1
+-
+-
++#ifdef CONFIG_MACH_RK3188_D7
++ struct delayed_work 				keyboard_work;
++#define KEYBOARD_DET			RK30_PIN3_PD3
++#define KEYBOARD_POWER_EN			RK30_PIN3_PD4
++#endif
+ #if 0
+ #define key_dbg(bdata, format, arg...)		\
+ 	dev_printk(KERN_INFO , &bdata->input->dev , format , ## arg)
+@@ -256,7 +259,6 @@ static irqreturn_t keys_isr(int irq, void *dev_id)
+ 	struct input_dev *input = bdata->input;
+ 	unsigned int type = EV_KEY;
+ 	BUG_ON(irq != gpio_to_irq(button->gpio));
+-
+         if(button->wakeup == 1 && bdata->ddata->in_suspend == true){
+ 		bdata->state = 1;
+ 		key_dbg(bdata, "wakeup: %skey[%s]: report ev[%d] state[%d]\n", 
+@@ -269,7 +271,43 @@ static irqreturn_t keys_isr(int irq, void *dev_id)
+ 				jiffies + msecs_to_jiffies(DEFAULT_DEBOUNCE_INTERVAL));
+ 	return IRQ_HANDLED;
+ }
++#ifdef CONFIG_MACH_RK3188_D7
++
++
++static irqreturn_t keyboard_power_ctrl(int irq, void *dev_id)
++{
++	cancel_delayed_work_sync(&keyboard_work);
++	schedule_delayed_work(&keyboard_work,msecs_to_jiffies(20));
++	return IRQ_HANDLED;
++}
++
++static void keyboard_work_func(struct work_struct *work)
++{
++	unsigned int value = 0;
++	unsigned int type;
++	int irq;
++	irq = gpio_to_irq(KEYBOARD_DET);
++	disable_irq_nosync(irq);
++	value = gpio_get_value(KEYBOARD_DET);
++	type = value? IRQ_TYPE_EDGE_FALLING : IRQ_TYPE_EDGE_RISING;
++	irq_set_irq_type(irq, type);
++	
++	if(value)
++	{
++		printk("zougui  value is Hight\n");
++		printk("zougui  no keyboard\n");
++	}else
++	{
++		printk("zougui  value is Low\n");
++		printk("zougui  keyboard inserted\n");
++		
++	}
++	enable_irq(irq);
++	return ;
++}
++
+ 
++#endif
+ static void keys_adc_callback(struct adc_client *client, void *client_param, int result)
+ {
+ 	struct rk29_keys_drvdata *ddata = (struct rk29_keys_drvdata *)client_param;
+@@ -442,9 +480,28 @@ static int __devinit keys_probe(struct platform_device *pdev)
+ 	{
+ 		pr_err("failed to create key file error: %d\n", error);
+ 	}
++	
+ 
++	//INIT_DELAYED_WORK(&keyboard_det_work, keyboard_work);
++#ifdef CONFIG_MACH_RK3188_D7
++	int keyboard_irq;
++	gpio_free(KEYBOARD_DET);
++	gpio_request(KEYBOARD_DET,"keyboard-det");
++	gpio_direction_input(KEYBOARD_DET);
++	keyboard_irq = gpio_to_irq(KEYBOARD_DET);
++	INIT_DELAYED_WORK(&keyboard_work,keyboard_work_func);
++	schedule_delayed_work(&keyboard_work,msecs_to_jiffies(3000));
++	request_irq(keyboard_irq, keyboard_power_ctrl , IRQF_TRIGGER_RISING ,"keyboard-det" ,NULL);
++
++	gpio_free(KEYBOARD_POWER_EN);
++	gpio_request(KEYBOARD_POWER_EN,"keyboard-power");
++	gpio_direction_output(KEYBOARD_POWER_EN,0);
+ 
++#endif
+ 	input_dev = input;
++	
++	
++
+ 	return error;
+ 
+  fail2:
+@@ -572,4 +629,4 @@ module_exit(keys_exit);
+ MODULE_LICENSE("GPL");
+ MODULE_AUTHOR("Phil Blundell <pb@handhelds.org>");
+ MODULE_DESCRIPTION("Keyboard driver for CPU GPIOs");
+-MODULE_ALIAS("platform:gpio-keys");
++MODULE_ALIAS("platform:gpio-keys");
+\ No newline at end of file
