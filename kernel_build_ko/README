@@ -1,4 +1,4 @@
 
-1 ： 首先必须使用的编译器与kernel编译的编译器的相同，如果不清楚kernel 使用的gcc编译器是什么，可以全编译一次kernel,从打印信息中可以看出gcc 的路径
+1 ： 首先必须使用的编译器与kernel编译的编译器的相同，如果不清楚kernel 使用的gcc编译器是什么，可以在代码中的一个makefile 文件中添加 $(warning "############## $(CROSS_COMPILE)") 打印出gcc 的路径
 2 ： 必须指定的是kernel 编译输出路径，而不是源码路径，
 3：  kernel 必须打开CONFIG_MODULES=y,打开对module 的支持，此过程可能会引起其他宏的变化 ，如CONFIG_IPV6 默认是Y, 可能变为M, 需要注意
