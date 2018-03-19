@@ -12,8 +12,9 @@ BOOTLOADER_PATH="vendor/mediatek/proprietary/bootable/bootloader/"
 #kernel 路径
 KERNEL_PATH="kernel-3.18/"
 #lunch project
-LUNCH_PROJECT="full_k80hd_bsp_fwv_512m"
+LUNCH_PROJECT=""
 
+#保存编译工程的配置
 
 function backup_files()
 {
@@ -77,7 +78,7 @@ function main()
 		read Options
 	fi
 
-	if [ $Options = "mmm" ] && [ ! -d $2 ]; then
+	if [ $Options = "mmm" ] && [ ! -d $2 ] || [ x$2 = "x" ]; then
 		echo "*************************************************************"
 		echo "*                                                           *"
 		echo "*  please use like this : ./build_project.sh mmm file_path  *"
@@ -101,13 +102,13 @@ function main()
 	source build/envsetup.sh
 	case  $build_type in
 		user|1)
-			lunch $LUNCH_PROJECT"-user"
+			lunch "full_"$LUNCH_PROJECT"-user"
 		;;
 		userdebug|2)
-			lunch $LUNCH_PROJECT"-userdebug"
+			lunch "full_"$LUNCH_PROJECT"-userdebug"
 		;;
 		*)
-			lunch $LUNCH_PROJECT"-eng"
+			lunch "full_"$LUNCH_PROJECT"-eng"
 		;;
 	esac
 
@@ -142,6 +143,43 @@ function main()
 	restore_files
 }
 
+function load_config()
+{
+	if [  -d out/target/product/ ];then
+		LUNCH_PROJECT=`ls out/target/product/`
+		echo    "*************************************************************"
+		echo    "*                                                           *"
+		echo -e "*  now build project :   \033[31m $LUNCH_PROJECT \033[0m"
+		echo    "*                                                           *"
+		echo    "*************************************************************"
+	else 
+		lunch_array=`ls device/mediateksample/`
+		lunch_array=(${lunch_array// / })
+		echo ""
+		echo " please select project : "
+		num=0;
+		for project in ${lunch_array[@]}
+		do 
+			echo " $num : $project"
+			let num++
+		done
+		echo -n "your choice :  "
+		read choice
+		case $choice in
+			[0-9])
+				if [ $choice -lt ${#lunch_array[@]} ] && [ $choice -ge 0 ]; then
+					LUNCH_PROJECT=${lunch_array[choice]}
+				fi
+			;;
+		esac
+	fi
+
+	if [ x$LUNCH_PROJECT = "x" ]; then
+		echo "ERROR :  cannot access your project"
+		exit
+	fi
+}
+
+load_config
+
 main $1 $2
-
-
