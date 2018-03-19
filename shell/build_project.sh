@@ -11,6 +11,8 @@ let "JOBS=$(grep -r "processor" /proc/cpuinfo |wc -l)/2"
 BOOTLOADER_PATH="vendor/mediatek/proprietary/bootable/bootloader/"
 #kernel 路径
 KERNEL_PATH="kernel-3.18/"
+#lunch project
+LUNCH_PROJECT="full_k80hd_bsp_fwv_512m"
 
 
 function backup_files()
@@ -42,7 +44,7 @@ function prebuild_work()
 {
 	rm $BACKUP_CODE_DIR -rf
 	case $1 in
-		k|K|d|D|l|L|p|P|u|U|n|N|m|M)
+		k|K|d|D|l|L|p|P|u|U|n|N|m|M|mmm)
 			backup_files
 			cover_file
 			;;
@@ -53,35 +55,61 @@ function prebuild_work()
 	esac
 }
 
-function Usage()
-{
-	echo ""
-	echo "Usage : ./build_kernel.sh [OPTION]"
-	echo "	Options: :"
-	echo "	 k|K  : build boot"
-	echo "	 d|D  : build dts"
-	echo "	 l|L  : build lk"
-	echo "	 p|P  : build preloader"
-	echo "	 u|U  : build all(Update)"
-	echo "	 n|N  : build all(New)"
-	echo "	 m|M  : build modem"
-	echo ""
-	echo -n "please input your Options : "
-}
 
 function main()
 {
 
 	Options=$1
+
 	if [ x$Options = "x" ]; then
-		Usage
+		echo ""
+		echo "Usage : ./build_project.sh [OPTION] ..."
+		echo "	[OPTION]: :"
+		echo "	 k|K  : build boot"
+		echo "	 d|D  : build dts"
+		echo "	 l|L  : build lk"
+		echo "	 p|P  : build preloader"
+		echo "	 u|U  : build all(Update)"
+		echo "	 n|N  : build all(New)"
+		echo "	 m|M  : build modem"
+		echo "	 mmm  : mmm one module"
+		echo -n "please input your Options [eng] : "
 		read Options
+	fi
+
+	if [ $Options = "mmm" ] && [ ! -d $2 ]; then
+		echo "*************************************************************"
+		echo "*                                                           *"
+		echo "*  please use like this : ./build_project.sh mmm file_path  *"
+		echo "*                                                           *"
+		echo "*************************************************************"
+		exit
+	fi
+
+	# new all
+	if [ $Options = "N" ] || [ $Options = "n" ]; then
+		echo "while project do you like : "
+		echo "   1: user"
+		echo "   2: userdebug"
+		echo "   3: eng"
+		echo -n "please input [eng]: "
+		read build_type
 	fi
 
 	prebuild_work $Options
 
 	source build/envsetup.sh
-	lunch full_k80hd_bsp_fwv_512m-eng
+	case  $build_type in
+		user|1)
+			lunch $LUNCH_PROJECT"-user"
+		;;
+		userdebug|2)
+			lunch $LUNCH_PROJECT"-userdebug"
+		;;
+		*)
+			lunch $LUNCH_PROJECT"-eng"
+		;;
+	esac
 
 	case $Options in
 	k|K)
@@ -106,10 +134,14 @@ function main()
 	m|M)
 		make update-modem -j$JOBS
 	;;
+	mmm)
+		mmm $2
+	;;
 	esac
-
 
 	restore_files
 }
 
-main $1
+main $1 $2
+
+
