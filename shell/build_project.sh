@@ -19,8 +19,19 @@ PROJECT_BASE="GT_PROJECT/BUILD_MTK_V1/"
 PROJECT_PATH_ARRAY=("board_number" "board_version" "customer_name" "project_name")
 RETURN_VALUE=""
 
+#MTK 默认原始工程路径 device/mediateksample/
+MTK_DEFAULT_PROJECT_ARRAY=("mediateksample" "together")
 
-#保存编译工程的配置
+#编译选项
+IS_NEED_BUILD_BOOT=""
+IS_NEED_BUILD_DTS=""
+IS_NEED_BUILD_LK=""
+IS_NEED_BUILD_PRELOADER=""
+IS_NEED_BUILD_NEW_ALL=""
+IS_NEED_BUILD_UPDATE_ALL=""
+IS_NEED_BUILD_MODEM=""
+IS_NEED_BUILD_MODULE=""
+BUILD_TYPE="eng"
 
 function backup_files()
 {
@@ -50,138 +61,70 @@ function cover_file()
 function prebuild_work()
 {
 	rm $BACKUP_CODE_DIR -rf
-	case $1 in
-		k|K|d|D|l|L|p|P|u|U|n|N|m|M|mmm)
-			backup_files
-			cover_file
-			;;
-		*)
-			echo -e "\033[31m ERROR : no match [$1] Options \033[0m"
-			exit 
-		;;
-	esac
+	if [ x$IS_NEED_BUILD_BOOT = "x" ] && [ x$IS_NEED_BUILD_DTS = "x" ] &&
+	   [ x$IS_NEED_BUILD_LK = "x" ] && [ x$IS_NEED_BUILD_PRELOADER = "x" ] && 
+	   [ x$IS_NEED_BUILD_NEW_ALL = "x" ] && [ x$IS_NEED_BUILD_UPDATE_ALL = "x" ] && 
+	   [ x$IS_NEED_BUILD_MODULE = "x" ] && [ x$IS_NEED_BUILD_MODEM = "x" ]; then
+			echo -e "	\033[35m ERROR :  no match [$_select_] Options \033[0m"
+	 		exit		
+	 else
+	 	backup_files
+	 	cover_file
+	 fi
 }
 
 function select_build_option()
 {
-		echo -e ""
-		echo -e "Usage : ./build_project.sh [OPTION] ..."
-		echo -e "	[OPTION]: :"
-		echo -e "	\033[1;31m k|K \033[0m : build boot"
-		echo -e "	\033[1;31m d|D \033[0m : build dts"
-		echo -e "	\033[1;31m l|L \033[0m : build lk"
-		echo -e "	\033[1;31m p|P \033[0m : build preloader"
-		echo -e "	\033[1;31m u|U \033[0m : build all(Update)"
-		echo -e "	\033[1;31m n|N \033[0m : build all(New)"
-		echo -e "	\033[1;31m m|M \033[0m : build modem"
-		echo -e "	\033[1;31m mmm \033[0m : mmm one module"
-		echo -n "	 select : "
-		read Options
-		case $Options in
-			k|K|d|D|l|L|p|P|u|U|n|N|m|M|mmm)
-				RETURN_VALUE=$Options
-			;;
-			*)
-				RETURN_VALUE=""
-				echo -e "	\033[35m ERROR : no match [$Options] Options \033[0m"
-				select_build_option
-			;;
-		esac
-}
-function select_build_type()
-{
-		echo -e ""
-		echo -e "while project do you like : "
-		echo -e "	\033[1;31m 1: user \033[0m"
-		echo -e "	\033[1;31m 2: userdebug \033[0m"
-		echo -e "	\033[1;31m 3: eng \033[0m"
-		echo -n "	 select : "
-		read Options
-		case $Options in
-			1|user|2|userdebug|3|eng)
-				RETURN_VALUE=$Options
-			;;
-			*)
-				RETURN_VALUE=""
-				echo -e "	\033[35m ERROR : no match [$Options] Options \033[0m"
-				select_build_type
-			;;
-		esac
-}
-
-function main()
-{
-
-	if [ x$1 = "x" ]; then
-		select_build_option
-		Options=$RETURN_VALUE
-	else
-		Options=$1
-	fi
-
-
-	if [ $Options = "mmm" ]; then
-		if [ ! -d $2 ] || [ x$2 = "x" ]; then
-			echo "*************************************************************"
-			echo "*                                                           *"
-			echo "*  please use like this : ./build_project.sh mmm file_path  *"
-			echo "*                                                           *"
-			echo "*************************************************************"
-			exit
+		if [ x$1 = "x" ];	then	
+			echo -e ""
+			echo -e "	[OPTION]: :"
+			echo -e "	\033[1;31m k|K \033[0m : build boot"
+			echo -e "	\033[1;31m d|D \033[0m : build dts"
+			echo -e "	\033[1;31m l|L \033[0m : build lk"
+			echo -e "	\033[1;31m p|P \033[0m : build preloader"
+			echo -e "	\033[1;31m u|U \033[0m : build all(Update)"
+			echo -e "	\033[1;31m n|N \033[0m : build all(New)"
+			echo -e "	\033[1;31m m|M \033[0m : build modem"
+			echo -e "	\033[1;31m mmm \033[0m : mmm one module"
+			echo -e "	\033[0;31m 1  : user \033[0m"
+			echo -e "	\033[0;31m 2  : userdebug \033[0m"
+			echo -e "	\033[0;31m 3  : eng [default] \033[0m"
+			echo -n "	 select : "
+			read _select_
+		else
+			_select_=$1
 		fi
-	fi
+		
+		IS_NEED_BUILD_BOOT=$(echo $_select_ | grep -i k)
+		IS_NEED_BUILD_DTS=$(echo $_select_ | grep -i d)
+		IS_NEED_BUILD_LK=$(echo $_select_ | grep -i l)
+		IS_NEED_BUILD_PRELOADER=$(echo $_select_ | grep -i p)
+		IS_NEED_BUILD_NEW_ALL=$(echo $_select_ | grep -i n)
+		IS_NEED_BUILD_UPDATE_ALL=$(echo $_select_ | grep -i u)
+		IS_NEED_BUILD_MODULE=$(echo $_select_ | grep -i mmm)
+		
+		if [ x$IS_NEED_BUILD_MODULE = "x" ];then
+			IS_NEED_BUILD_MODEM=$(echo $_select_ | grep -i m)
+		else
+			IS_NEED_BUILD_MODEM=""
+		fi			
+		
+		if [ x$(echo $_select_ | grep -i 1) != "x" ]; then
+			BUILD_TYPE="user"
+		elif [ x$(echo $_select_ | grep -i 2) != "x" ]; then
+			BUILD_TYPE="userdebug"
+		else
+			BUILD_TYPE="eng"
+		fi
 
-	# new all
-	if [ $Options = "N" ] || [ $Options = "n" ]; then
-		select_build_type
-		build_type=$RETURN_VALUE
-	fi
+		if [ x$IS_NEED_BUILD_BOOT = "x" ] && [ x$IS_NEED_BUILD_DTS = "x" ] &&
+		   [ x$IS_NEED_BUILD_LK = "x" ] && [ x$IS_NEED_BUILD_PRELOADER = "x" ] && 
+		   [ x$IS_NEED_BUILD_NEW_ALL = "x" ] && [ x$IS_NEED_BUILD_UPDATE_ALL = "x" ] && 
+		   [ x$IS_NEED_BUILD_MODULE = "x" ] && [ x$IS_NEED_BUILD_MODEM = "x" ]; then
+				echo -e "	\033[35m ERROR :  no match [$_select_] Options \033[0m"
+		 		select_build_option
+		 fi
 
-
-	prebuild_work $Options
-
-	source build/envsetup.sh
-	case  $build_type in
-		user|1)
-			lunch "full_"$LUNCH_PROJECT"-user"
-		;;
-		userdebug|2)
-			lunch "full_"$LUNCH_PROJECT"-userdebug"
-		;;
-		*)
-			lunch "full_"$LUNCH_PROJECT"-eng"
-		;;
-	esac
-
-	case $Options in
-	k|K)
-		make bootimage -j$JOBS	
-	;;
-	d|D)
-		make odmdtboimage -j$JOBS
-	;;
-	l|L)
-		mmm vendor/mediatek/proprietary/bootable/bootloader/lk:lk -j$JOBS
-	;;
-	p|P)
-		mmm vendor/mediatek/proprietary/bootable/bootloader/preloader:pl -j$JOBS
-	;;
-	u|U)
-		make -j$JOBS
-	;;
-	n|N)
-		rm out -rf
-		make -j$JOBS
-	;;
-	m|M)
-		make update-modem -j$JOBS
-	;;
-	mmm)
-		mmm $2
-	;;
-	esac
-
-	restore_files
 }
 
 
@@ -249,7 +192,7 @@ function if_select_old_project_path_config()
 		;;
 		*)	
 			echo -e "\033[35m	ERROR : no match [$_select_] Options \033[0m"
-			if_select_old_config
+			if_select_old_project_path_config
 		;;
 	esac
 
@@ -283,46 +226,105 @@ function select_project_path()
 	fi
 }
 
-function load_config()
+function select_lunch_project()
 {
-	select_project_path
 
-	# 获得LUNCH_PROJECT
 	if [  -d out/target/product/ ];then
 		LUNCH_PROJECT=`ls out/target/product/`
-		echo    "*************************************************************"
-		echo    "*                                                           *"
-		echo -e "*  now build project :   \033[31m $LUNCH_PROJECT \033[0m"
-		echo    "*                                                           *"
-		echo    "*************************************************************"
-	else 
-		lunch_array=`ls device/mediateksample/`
-		lunch_array=(${lunch_array// / })
+		echo    ""
+		echo -e "now build project :   \033[31m $LUNCH_PROJECT \033[0m"
+	else
+		for i in ${MTK_DEFAULT_PROJECT_ARRAY[@]}
+		do
+			if [ -d "device/$i" ];then
+					lunch_array=`ls device/$i/`
+					lunch_array=(${lunch_array// / })
+			fi
+		done
 		echo ""
-		echo " please select project : "
+		echo "please select project : "
 		num=0;
 		for project in ${lunch_array[@]}
 		do 
-			echo " $num : $project"
+			echo -e "\033[1;31m	 $num 	: $project\033[0m"
 			let num++
 		done
-		echo -n "your choice :  "
-		read choice
-		case $choice in
-			[0-9])
-				if [ $choice -lt ${#lunch_array[@]} ] && [ $choice -ge 0 ]; then
-					LUNCH_PROJECT=${lunch_array[choice]}
-				fi
+		let num--
+		echo -n "	 your choice :  "
+		read _select_
+		case $_select_ in
+			[0-$num])
+				LUNCH_PROJECT=${lunch_array[$_select_]}
+			;;
+			*)
+				echo -e "\033[35m	ERROR : no match [$_select_] Options \033[0m"
+				select_lunch_project
 			;;
 		esac
 	fi
-
-	if [ x$LUNCH_PROJECT = "x" ]; then
-		echo "ERROR :  cannot access your project"
-		exit
-	fi
 }
 
-load_config
+function main()
+{
+
+	select_project_path
+	# 获得LUNCH_PROJECT
+	select_lunch_project
+
+	select_build_option $1
+
+	prebuild_work
+
+	source build/envsetup.sh
+	lunch "full_"$LUNCH_PROJECT"-"$BUILD_TYPE
+
+	start_time_s=$(date +%s)
+
+	
+	if [ x$IS_NEED_BUILD_BOOT != "x" ];	then
+		make bootimage -j$JOBS
+		#mmm kernel-3.18:kernel -j$JOBS
+	fi
+
+	if [ x$IS_NEED_BUILD_DTS != "x" ]; then
+		make odmdtboimage -j$JOBS
+	fi
+
+	if [ x$IS_NEED_BUILD_LK != "x" ]; then
+		mmm vendor/mediatek/proprietary/bootable/bootloader/lk:lk -j$JOBS
+	fi
+
+	if [ x$IS_NEED_BUILD_PRELOADER != "x" ]; then
+		mmm vendor/mediatek/proprietary/bootable/bootloader/preloader:pl -j$JOBS
+	fi	
+
+	if [ x$IS_NEED_BUILD_NEW_ALL != "x" ]; then
+		rm out -rf
+		make -j$JOBS
+	fi	
+
+	if [ x$IS_NEED_BUILD_UPDATE_ALL != "x" ]; then
+		make -j$JOBS
+	fi	
+
+	if [ x$IS_NEED_BUILD_MODEM != "x" ]; then
+		make update-modem -j$JOBS
+	fi	
+
+	if [ x$IS_NEED_BUILD_MODULE != "x" ]; then
+		if [ ! -d $2 ] || [ x$2 = "x" ]; then
+			echo -e "\033[35m ERROR : cannot access mmm path[$2] \033[0m"
+			echo -e "\033[35m Usage ： ./build_project.sh mmm path\033[0m"
+		else
+			mmm $2
+		fi
+	fi	
+
+	end_time_s=$(date +%s)
+	echo "#############  USE $(($end_time_s - $start_time_s ))########################"
+	restore_files
+}
+
+
 main $1 $2
 
