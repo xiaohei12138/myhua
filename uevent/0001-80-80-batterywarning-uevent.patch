@@ -1,0 +1,82 @@
+From bc26da695dd2bef5c69ee8fc639f851569ff38ca Mon Sep 17 00:00:00 2001
+From: dd-3-x6 <zoug@fise.com.cn>
+Date: Fri, 6 Mar 2020 14:07:42 +0800
+Subject: [PATCH] =?UTF-8?q?=E9=82=B9=E8=B4=B5-80-=E7=BB=9F=E4=B8=80?=
+ =?UTF-8?q?=E4=B8=BA80=E5=B9=B3=E5=8F=B0=E4=B8=BAbatterywarning=E6=B7=BB?=
+ =?UTF-8?q?=E5=8A=A0=E9=80=9A=E7=9F=A5uevent?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../drivers/power/supply/mediatek/battery_common.c | 40 ++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
+
+diff --git a/kernel-4.9-lc/drivers/power/supply/mediatek/battery_common.c b/kernel-4.9-lc/drivers/power/supply/mediatek/battery_common.c
+index 4c751da..4825cc1 100755
+--- a/kernel-4.9-lc/drivers/power/supply/mediatek/battery_common.c
++++ b/kernel-4.9-lc/drivers/power/supply/mediatek/battery_common.c
+@@ -2751,6 +2751,38 @@ static void mt_battery_notify_UI_test(void)
+ 	}
+ }
+ 
++//add by zougui ,20200306,for BatteryWarning ,start
++static struct device *battery_notify_device;
++static struct class *battery_notify_class;
++static void init_battery_notify_uevent(void)
++{
++	battery_notify_class = class_create(THIS_MODULE, "battery_notify");
++	if (IS_ERR(battery_notify_class)){
++		printk("init_battery_notify_uevent battery_notify_class fail\n");
++		return ;
++	}
++	battery_notify_device = device_create(battery_notify_class, NULL,
++				MKDEV(0, 0), NULL, "notify");
++	
++	if (IS_ERR(battery_notify_device)){
++		printk("init_battery_notify_uevent battery_notify_device fail\n");
++		return ;
++	}
++}
++static int mtk_chgstat_notify(void)
++{
++	int ret = 0;
++	char *env[2] = { "CHGSTAT=1", NULL };
++
++	if(!IS_ERR(battery_notify_device)){
++		ret = kobject_uevent_env(&battery_notify_device->kobj, KOBJ_CHANGE, env);
++		if (ret)
++			printk("%s: kobject_uevent_fail, ret=%d", __func__, ret);
++	}
++
++	return ret;
++}
++//add by zougui ,end
+ 
+ void mt_battery_notify_check(void)
+ {
+@@ -2772,6 +2804,11 @@ void mt_battery_notify_check(void)
+ 
+ 		mt_battery_notify_UI_test();
+ 	}
++	//add by zougui , for batterywarning ,20200306  
++	if(g_BatteryNotifyCode!=0x0000)
++	{
++		mtk_chgstat_notify();
++	}
+ }
+ 
+ static void mt_battery_thermal_check(void)
+@@ -4364,6 +4401,9 @@ static int battery_probe(struct platform_device *dev)
+ 
+ 	batt_init_cust_data();
+ 
++//add by zougui ,20200306,for BatteryWarning
++	init_battery_notify_uevent();
++
+ 	battery_charging_control(CHARGING_CMD_GET_PLATFORM_BOOT_MODE, &g_platform_boot_mode);
+ 	battery_log(BAT_LOG_CRTI, "[BAT_probe] g_platform_boot_mode = %d\n ", g_platform_boot_mode);
+ 
+-- 
+1.9.1
+
