@@ -132,12 +132,23 @@ void DeQueue(char *dest)
 *     kmsg
 *
 ***************************/
+#include <linux/moduleparam.h>
+int mylog_debug_1 = 1000;
+module_param_named(mylog_debug_1, mylog_debug_1, int, S_IRUGO | S_IWUSR);
+
+
+
+static bool first_init=false;
 static DECLARE_WAIT_QUEUE_HEAD(buff_waitq);
 void add_my_log(const char *fmt, ...)
 {
 
 	va_list args;
 	char tmp_buff[1024];
+	if(first_init==false){
+		first_init=true;
+		createQueue();
+	}
 	memset(tmp_buff,0,sizeof(tmp_buff));
 	va_start(args, fmt);
 	vsprintf(tmp_buff, fmt, args);
@@ -152,7 +163,7 @@ static int kmsg_open(struct inode * inode, struct file * file)
 	return 0;
 }
 
-static int kmsg_read(struct file *filp, char __user *buff, size_t count, loff_t *offp)
+static ssize_t kmsg_read(struct file *filp, char __user *buff, size_t count, loff_t *offp)
 {
 	char buffer[1024]={0};
 	int ret;
@@ -186,7 +197,10 @@ static const struct file_operations proc_kmsg_operations = {
 
 static int __init my_proc_kmsg_init(void)
 {
-	createQueue();
+	if(first_init==false){
+		first_init=true;
+		createQueue();
+	}
 	proc_create("my_kmsg", S_IRUSR, NULL, &proc_kmsg_operations);
 	return 0;
 }
